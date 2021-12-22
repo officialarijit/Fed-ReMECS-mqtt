@@ -13,7 +13,7 @@ A Federated Learning Method for Real-time Emotion State Classification from Mult
   - `Tensorflow`
   - `Scikit-Learn`
   - `paho-mqtt` 
-  - `Konsole` <-- This is needed to simulate the terminal.
+  - `Konsole - KDE's Terminal Emulator` <-- This is needed to simulate the terminal.
   
 - Installation steps:
   - Step 1: Install `Anaconda`. 
