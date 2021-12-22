@@ -10,10 +10,10 @@ A Federated Learning Method for Real-time Emotion State Classification from Mult
 
 - Required packages
   - `Keras` 
-  - `Tensorflow`
-  - `Scikit-Learn`
-  - `paho-mqtt` 
-  - `Konsole - KDE's Terminal Emulator` <-- This is needed to simulate the terminal.
+  - `Tensorflow` &#8592; for developing the `neural network`.
+  - `Scikit-Learn` &#8592; for model's performance matrics. 
+  - `paho-mqtt` &#8592; for `MQTT` protocol implementations. 
+  - `Konsole - KDE's Terminal Emulator` &#8592; Terminal emulator.
   
 - Installation steps:
   - Step 1: Install `Anaconda`. 
