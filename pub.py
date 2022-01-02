@@ -7,6 +7,8 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
+from creme import metrics
+
 from json import JSONEncoder
 from statistics import mode
 from scipy import stats
@@ -28,6 +30,18 @@ from Numpy_to_JSON_utils import *
 #=================================================================================================
 global all_emo
 all_emo = []
+
+fm_acc_val = metrics.Accuracy()
+fm_f1m_val = metrics.F1()
+fm_roc_val = metrics.ROCAUC()
+fm_mcc_val = metrics.MCC()
+fm_cm_val  = metrics.ConfusionMatrix()
+
+fm_acc_aro = metrics.Accuracy()
+fm_f1m_aro = metrics.F1()
+fm_roc_aro = metrics.ROCAUC()
+fm_mcc_aro = metrics.MCC()
+fm_cm_aro  = metrics.ConfusionMatrix()
 #=================================================================================================
 
 #=================================================================================================
@@ -36,7 +50,7 @@ n = sys.argv[1] #Reading the command line argument passed ['filename.py','passed
 
 client_name = 'LocalServer (User)'+n
 
-print(client_name +':>>' + 'Streaming Strated!')
+print(client_name +':>>' +' ' +'Streaming Strated!')
 
 p = int(n) #Person number
 
@@ -214,36 +228,64 @@ for jj in range(0,videos): #Video loop for each participants
         if c == 0: #For the first time model will return 0 or None
             tmp_y = [0,0]
 
-            y_pred_FusedModel = [2,2]
+            y_pred_FusedModel = [9,9]
             fm_model.fit(x_FF, y_act, epochs = 1, batch_size = 1, verbose=0)
 
             c=c+1
 
         else:
             tmp_y = fm_model.predict(x_FF)
-            y_pred_FusedModel = np.where(tmp_y[0] > 0.5, 1, 0)
             fm_model.fit(x_FF, y_act, epochs = 1, batch_size = 1, verbose=0)
-
-
-        #===========================================
-        # Performance matric update
-        #===========================================
-
-        fm_acc = accuracy_score(y_act[0], y_pred_FusedModel)  # update the accuracy metric
-
-        fm_f1m = f1_score(y_act[0], y_pred_FusedModel, average=None) #update f1 measure metric
 
         if slider_eda.reached_end_of_list():
             break
 
-    print('------------------------------------------------')
-    print('Actual Class:',y_act[0])
-    print('Model predicted:',y_pred_FusedModel)
-    print('Model accuracy:',fm_acc)
-    print('Model f1-score:',np.mean(fm_f1m))
-    print('------------------------------------------------')
 
-    all_emo.append([p,v, fm_acc, np.mean(fm_f1m), y_act[0][0],y_act[0][1], y_pred_FusedModel[0],y_pred_FusedModel[1]])
+    #===========================================
+    # Performance matric update
+    #===========================================
+    y_pred_FusedModel = np.where(tmp_y[0] > 0.5, 1, 0)
+
+    y_act_aro = y_act[0][1] #actual Arousal
+    y_act_val = y_act[0][0] #actual Valence
+
+    y_pred_val = y_pred_FusedModel[0]
+    y_pred_aro = y_pred_FusedModel[1]
+
+    fm_acc_val = fm_acc_val.update(y_act_val, y_pred_val)  # update the accuracy metric
+
+    fm_f1m_val = fm_f1m_val.update(y_act_val, y_pred_val) #update f1 measure metric
+
+    fm_roc_val = fm_roc_val.update(y_act_val, y_pred_val)
+
+    fm_mcc_val = fm_mcc_val.update(y_act_val, y_pred_val)
+
+    fm_cm_val = fm_cm_val.update(y_act_val, y_pred_val)
+
+
+    fm_acc_aro = fm_acc_aro.update(y_act_aro, y_pred_aro)  # update the accuracy metric
+
+    fm_f1m_aro = fm_f1m_aro.update(y_act_aro, y_pred_aro) #update f1 measure metric
+
+    fm_roc_aro = fm_roc_aro.update(y_act_aro, y_pred_aro)
+
+    fm_mcc_aro = fm_mcc_aro.update(y_act_aro, y_pred_aro)
+
+    fm_cm_aro = fm_cm_aro.update(y_act_aro, y_pred_aro)
+
+    print('----------------------------------------------------')
+    print('Actual Class:',y_act[0])
+    print('Fusion Model predicted:{}'.format(y_pred_FusedModel))
+
+
+    print('Model Valence accuracy:{}'.format(round(fm_acc_val.get(),4)))
+    print('Model Valence f1-score:{}'.format(round(fm_f1m_val.get(),4)))
+
+    print('Model Arousal accuracy:{}'.format(round(fm_acc_aro.get(),4)))
+    print('Model Arousal f1-score:{}'.format(round(fm_f1m_aro.get(),4)))
+    print('----------------------------------------------------')
+
+    all_emo.append([p,v, fm_acc_val, fm_f1m_val, fm_acc_aro, fm_f1m_aro, y_act[0][0],y_pred_val ,y_act[0][1], y_pred_aro])
 
 
     #==========================================================
@@ -292,10 +334,10 @@ for jj in range(0,videos): #Video loop for each participants
     if (i == videos):
         #if all the videos are done means no more data from User
         #Save all the results into CSV file
-        classifier = 'FusionModel'
         folderPath = '/home/gp/Desktop/MER_arin/FL-mqtt/Federated_Results/'
-        fname_fm = folderPath + client_name +'_person_FusionModel'+'_' +classifier+'_results.csv'
-        column_names = ['Person', 'Video', 'Acc', 'F1', 'y_act_val', 'y_act_aro', 'y_pred_aro', 'y_pred_aro']
+        fname_fm = folderPath + client_name +'_person_FusionModel'+'_'+'_results.csv'
+        column_names = ['Person', 'Video', 'Val_Acc', 'Val_F1', 'Aro_Acc','Aro_F1', 'y_act_val', 'y_act_aro', 'y_pred_aro', 'y_pred_aro']
         all_emo = pd.DataFrame(all_emo,columns = column_names)
         all_emo.to_csv(fname_fm)
+
         print('All Done! Client Closed')

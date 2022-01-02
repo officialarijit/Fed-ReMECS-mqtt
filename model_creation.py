@@ -20,9 +20,9 @@ def create_model(x, model_name):
     model = Sequential()
     model.add(Input(shape=(dim)))
     model.add(Dense(math.ceil((2/3)*dim),input_dim=dim,activation='sigmoid'))
-    model.add(Dense(2,activation='sigmoid'))
+    model.add(Dense(2,activation='softmax'))
     # print(model.summary())
     # plot_model(model, show_shapes=True, to_file= model_name+'_MLP_model.png')
     model.compile(optimizer=sgd,
-                loss='binary_crossentropy')
+                loss='categorical_crossentropy')
     return model
