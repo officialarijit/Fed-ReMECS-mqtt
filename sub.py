@@ -6,8 +6,8 @@ from json import JSONEncoder
 from federated_utils import *
 from Numpy_to_JSON_utils import *
 
-global q
-q = queue.Queue()
+global qGS
+qGS = queue.Queue()
 
 def on_connect(client, userdata, flags, rc):
     if rc ==0:
@@ -18,12 +18,14 @@ def on_connect(client, userdata, flags, rc):
 
 def on_message(client, userdata, message):
     print("Message received from Local Model")
-    q.put(message)
+    qGS.put(message)
 
-mqttBroker = "mqtt.eclipseprojects.io"
+# mqttBroker = "mqtt.eclipseprojects.io"
+
+mqttBroker = "broker.hivemq.com"
 client = mqtt.Client(client_id ="GlobalServer", clean_session=True)
 client.on_connect = on_connect
-client.connect(mqttBroker)
+client.connect(mqttBroker, 1883)
 
 client.loop_start()
 client.subscribe("LocalModel")
@@ -37,29 +39,29 @@ i = 0
 
 while True:
     all_local_model_weights = list()
+    local_clients = list()
     print('---------STARTED-------------')
     print('Global Server')
     print('Round: ',i)
 
     time.sleep(50)
 
-    while not q.empty():
-        message = q.get()
+    while not qGS.empty():
+        message = qGS.get()
 
         if message is None:
             continue
 
         msg = message.payload.decode('utf-8')
 
-        # Deserialization  of received JS0N data to Numpy Array
-        decodedModelWeights = json.loads(msg)
-        finalModelWeights = np.asarray(list(decodedModelWeights.values())[0])
+        decodedweights = json2NumpyWeights(msg)
 
-        #scale the model weights and add to list
-        scaled_weights = scale_model_weights(finalModelWeights, 0.1)
+        # Convert object to a list
+        local_model_weights = list(decodedweights)
+        scaled_weights = scale_model_weights(local_model_weights, 0.1)
         all_local_model_weights.append(scaled_weights)
 
-    print(len(all_local_model_weights))
+    print('Total Local Model Received:',len(all_local_model_weights))
 
     i +=1 #Next round increment
 
@@ -68,8 +70,11 @@ while True:
         # Publish into Different topic after performing operation
         #===================================================================
         #to get the average over all the local model, we simply take the sum of the scaled weights
-        global_weights = sum_scaled_weights(all_local_model_weights)
-        encodedGlobalModelWeights = json.dumps(global_weights,cls=NumpyEncoder)
+        averaged_weights = list()
+        averaged_weights = sum_scaled_weights(all_local_model_weights)
+        global_weights = EagerTensor2Numpy(averaged_weights)
+
+        encodedGlobalModelWeights = json.dumps(global_weights,cls=Numpy2JSONEncoder)
 
         client.publish("GlobalModel", payload = encodedGlobalModelWeights) #str(Global_weights), qos=0, retain=False)
         print("Broadcasted Global Model to Topic:--> GlobalModel")

@@ -25,7 +25,8 @@ def scale_model_weights(weight, scalar):
     weight_final = []
     steps = len(weight)
     for i in range(steps):
-        weight_final.append(scalar * weight[i])
+        weight_final.append(scalar * np.array(weight[i][1]))
+
     return weight_final
 
 
