@@ -202,7 +202,7 @@ for jj in range(0,videos): #Video loop for each participants
             #==============================
             # Feature Fused Model
             #==============================
-            fm_model = create_model(x_FF, 'Fusion Model')
+            fm_model = create_model(x_FF, 'Fusion_Model')
 
             init_m = init_m+1
 
@@ -298,3 +298,4 @@ for jj in range(0,videos): #Video loop for each participants
         column_names = ['Person', 'Video', 'Acc', 'F1', 'y_act_val', 'y_act_aro', 'y_pred_aro', 'y_pred_aro']
         all_emo = pd.DataFrame(all_emo,columns = column_names)
         all_emo.to_csv(fname_fm)
+        print('All Done! Client Closed')

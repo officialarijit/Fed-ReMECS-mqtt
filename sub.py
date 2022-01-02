@@ -79,6 +79,8 @@ while True:
         client.publish("GlobalModel", payload = encodedGlobalModelWeights) #str(Global_weights), qos=0, retain=False)
         print("Broadcasted Global Model to Topic:--> GlobalModel")
 
+        time.sleep(10) #pause it so that the publisher gets the Global model
+
         #====================================================================
 
     if(i >0 and len(all_local_model_weights) ==0): #loop break no message from producer
