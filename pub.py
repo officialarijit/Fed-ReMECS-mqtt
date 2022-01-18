@@ -28,7 +28,6 @@ from Numpy_to_JSON_utils import *
 
 
 #=================================================================================================
-global all_emo
 all_emo = []
 
 fm_acc_val = metrics.Accuracy()
@@ -45,7 +44,7 @@ fm_cm_aro  = metrics.ConfusionMatrix()
 #=================================================================================================
 
 #=================================================================================================
-
+print('---------------------------------------------------------------')
 n = sys.argv[1] #Reading the command line argument passed ['filename.py','passed value/client number']
 
 client_name = 'LocalServer (User)'+n
@@ -59,15 +58,18 @@ p = int(n) #Person number
 #=================================================================================================
 # All MQTT ones Here
 #=================================================================================================
-
-global qLS
 qLS = queue.Queue() #Queue to store the received message in on_message call back
 
-def on_connect(client, userdata, flags, rc): #on connect callback from MQTT
+def on_connect(client, userdata, flags, rc):
     if rc ==0:
-        print("Local Server connected to broker successfully")
+        print("Local Server connected to broker successfylly ")
     else:
         print(f"Failed with code {rc}")
+
+    for i in topic_list:
+        val = client.subscribe(i)
+        print(val)
+
 
 def on_message(client, userdata, message): #On message callback from MQTT
     print('Global Model Received after FedAvg')
@@ -80,10 +82,16 @@ mqttBroker = "broker.hivemq.com"
 client = mqtt.Client(client_name) #mqtt Client
 client.on_connect = on_connect
 client.connect(mqttBroker, 1883) #mqtt broker connect
+
+topic_list =[('GlobalModel',0)] #Subscription topic list
+
 client.loop_start()
 
+#**********************************************************
 time.sleep(5) #Wait for connection setup to complete
+#**********************************************************
 
+print('---------------------------------------------------------------')
 
 #=================================================================================================
 
@@ -117,8 +125,9 @@ i =0
 videos = 32 #Total Number of Videos
 #=================================================================================================
 
-
+print('-----------------------------------------')
 print('Working with -->', classifier)
+print('-----------------------------------------')
 #=======================================
 # MAIN Loop STARTS HERE
 #=======================================
@@ -209,9 +218,9 @@ for jj in range(0,videos): #Video loop for each participants
         # Model initialization
         #===================================================
         if init_m == 0:
-            print('EDA Feature shape{}:'.format(x_eda.shape))
-            print('RESP BELT Feature shape{}:'.format(x_resp.shape))
-            print('Fused Feature shape{}:'.format(x_FF.shape))
+            # print('EDA Feature shape{}:'.format(x_eda.shape))
+            # print('RESP BELT Feature shape{}:'.format(x_resp.shape))
+            # print('Fused Feature shape{}:'.format(x_FF.shape))
 
             #==============================
             # Feature Fused Model
@@ -273,19 +282,29 @@ for jj in range(0,videos): #Video loop for each participants
 
     fm_cm_aro = fm_cm_aro.update(y_act_aro, y_pred_aro)
 
-    print('----------------------------------------------------')
+    print('-------------------------------------------------------------------------------')
     print('Actual Class:',y_act[0])
     print('Fusion Model predicted:{}'.format(y_pred_FusedModel))
 
 
-    print('Model Valence accuracy:{}'.format(round(fm_acc_val.get(),4)))
-    print('Model Valence f1-score:{}'.format(round(fm_f1m_val.get(),4)))
+    print(client_name+'-->'+'Valence accuracy:{}'.format(round(fm_acc_val.get(),4)))
+    print(client_name+'-->'+'Valence f1-score:{}'.format(round(fm_f1m_val.get(),4)))
 
-    print('Model Arousal accuracy:{}'.format(round(fm_acc_aro.get(),4)))
-    print('Model Arousal f1-score:{}'.format(round(fm_f1m_aro.get(),4)))
-    print('----------------------------------------------------')
+    print(client_name+'-->'+'Arousal accuracy:{}'.format(round(fm_acc_aro.get(),4)))
+    print(client_name+'-->'+'Arousal f1-score:{}'.format(round(fm_f1m_aro.get(),4)))
+    print('-------------------------------------------------------------------------------')
 
-    all_emo.append([p,v, fm_acc_val, fm_f1m_val, fm_acc_aro, fm_f1m_aro, y_act[0][0],y_pred_val ,y_act[0][1], y_pred_aro])
+    all_emo.append([p,v, fm_acc_val.get(), fm_f1m_val.get(), fm_acc_aro.get(), fm_f1m_aro.get(), y_act[0][0],y_pred_val ,y_act[0][1], y_pred_aro])
+
+    #========================================================================================
+    #Send the model performance from each to server for checking Global Model's performance
+    #========================================================================================
+    if i >0:
+        model_performance = {'Local_Model':p,'Acc_val':fm_acc_val.get(),'F1_val':fm_f1m_val.get(), 'Acc_aro': fm_acc_aro.get(), 'F1_aro': fm_f1m_aro.get() }
+        encoded_model_performance = json.dumps(model_performance)
+        client.publish("ModelPerformance", payload = encoded_model_performance)
+        print("Local Model Performance Broadcasted for "+ p_v +" to Topic:-> ModelPerformance")
+
 
 
     #==========================================================
@@ -296,8 +315,6 @@ for jj in range(0,videos): #Video loop for each participants
     model_weights = fm_model.get_weights()
     encodedModelWeights = json.dumps(model_weights,cls=Numpy2JSONEncoder)
 
-    # print(encodedModelWeights)
-
     #==========================================================
     # Broadcast (Publish) Local model weights to the mqttBroker
     #==========================================================
@@ -305,39 +322,47 @@ for jj in range(0,videos): #Video loop for each participants
     client.publish("LocalModel", payload = encodedModelWeights)
 
     print("Local Model Broadcasted for "+ p_v +" to Topic:-> LocalModel")
-    time.sleep(60) #put the loca server in sleep for 60 sec
 
-    i +=1 #incrementing this will het the model sent by Global Server
+    #**********************************************************
+    time.sleep(70) #put the loca server in sleep for 60 sec
+    #**********************************************************
 
-    if i>0: #Receive Global model from the Subscriber end
-        #===============================================================================
-        # Publisher as subscriber to receive results after operation at Subscriber end
-        #===============================================================================
-        client.subscribe("GlobalModel")
-        client.on_message = on_message
-        while not qLS.empty():
-            message = qLS.get()
+    #===============================================================================
+    # Receive Global model from the Subscriber end
+    #===============================================================================
 
-            if message is None:
-                continue
+    # if i>0:
+    #===============================================================================
+    # Publisher as subscriber to receive results after operation at Subscriber end
+    #===============================================================================
+    client.on_message = on_message
+    while not qLS.empty():
+        message = qLS.get()
 
-            msg = message.payload.decode('utf-8')
+        if message is None:
+            continue
 
-            # Deserialization the encoded received JSON data
-            global_weights = json2NumpyWeights(msg)
+        msg = message.payload.decode('utf-8')
 
-            fm_model.set_weights(global_weights) #Replacing the old model with the newley received model from Global Server
+        # Deserialization the encoded received JSON data
+        global_weights = json2NumpyWeights(msg)
 
-    #===========================================================================
-    # All Done Results Save Here
-    #===========================================================================
-    if (i == videos):
-        #if all the videos are done means no more data from User
-        #Save all the results into CSV file
-        folderPath = '/home/gp/Desktop/MER_arin/FL-mqtt/Federated_Results/'
-        fname_fm = folderPath + client_name +'_person_FusionModel'+'_'+'_results.csv'
-        column_names = ['Person', 'Video', 'Val_Acc', 'Val_F1', 'Aro_Acc','Aro_F1', 'y_act_val', 'y_act_aro', 'y_pred_aro', 'y_pred_aro']
-        all_emo = pd.DataFrame(all_emo,columns = column_names)
-        all_emo.to_csv(fname_fm)
+        fm_model.set_weights(global_weights) #Replacing the old model with the newley received model from Global Server
 
-        print('All Done! Client Closed')
+
+    if (i == videos): #if all the videos are done means no more data from User
+        break
+
+    i +=1
+
+
+#===============================================================================
+#Save all the results into CSV file
+#===============================================================================
+folderPath = '/home/gp/Desktop/MER_arin/FL-mqtt/Federated_Results/'
+fname_fm = folderPath + client_name +'_person_FusionModel'+'_'+'_results.csv'
+column_names = ['Person', 'Video', 'Val_Acc', 'Val_F1', 'Aro_Acc','Aro_F1', 'y_act_val', 'y_act_aro', 'y_pred_aro', 'y_pred_aro']
+all_emo = pd.DataFrame(all_emo,columns = column_names)
+all_emo.to_csv(fname_fm)
+
+print('All Done! Client Closed')
