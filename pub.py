@@ -28,7 +28,6 @@ from Numpy_to_JSON_utils import *
 
 
 #=================================================================================================
-global all_emo
 all_emo = []
 
 fm_acc_val = metrics.Accuracy()
@@ -45,7 +44,7 @@ fm_cm_aro  = metrics.ConfusionMatrix()
 #=================================================================================================
 
 #=================================================================================================
-
+print('---------------------------------------------------------------')
 n = sys.argv[1] #Reading the command line argument passed ['filename.py','passed value/client number']
 
 client_name = 'LocalServer (User)'+n
@@ -59,8 +58,6 @@ p = int(n) #Person number
 #=================================================================================================
 # All MQTT ones Here
 #=================================================================================================
-
-global qLS
 qLS = queue.Queue() #Queue to store the received message in on_message call back
 
 def on_connect(client, userdata, flags, rc): #on connect callback from MQTT
@@ -84,6 +81,7 @@ client.loop_start()
 
 time.sleep(5) #Wait for connection setup to complete
 
+print('---------------------------------------------------------------')
 
 #=================================================================================================
 
@@ -114,11 +112,12 @@ indx = 0
 c=0
 ccc =0
 i =0
-videos = 32 #Total Number of Videos
+videos = 3 #Total Number of Videos
 #=================================================================================================
 
-
+print('-----------------------------------------')
 print('Working with -->', classifier)
+print('-----------------------------------------')
 #=======================================
 # MAIN Loop STARTS HERE
 #=======================================
@@ -273,19 +272,19 @@ for jj in range(0,videos): #Video loop for each participants
 
     fm_cm_aro = fm_cm_aro.update(y_act_aro, y_pred_aro)
 
-    print('----------------------------------------------------')
+    print('-------------------------------------------------------------------------------')
     print('Actual Class:',y_act[0])
     print('Fusion Model predicted:{}'.format(y_pred_FusedModel))
 
 
-    print('Model Valence accuracy:{}'.format(round(fm_acc_val.get(),4)))
-    print('Model Valence f1-score:{}'.format(round(fm_f1m_val.get(),4)))
+    print(client_name+'-->'+'Valence accuracy:{}'.format(round(fm_acc_val.get(),4)))
+    print(client_name+'-->'+'Valence f1-score:{}'.format(round(fm_f1m_val.get(),4)))
 
-    print('Model Arousal accuracy:{}'.format(round(fm_acc_aro.get(),4)))
-    print('Model Arousal f1-score:{}'.format(round(fm_f1m_aro.get(),4)))
-    print('----------------------------------------------------')
+    print(client_name+'-->'+'Arousal accuracy:{}'.format(round(fm_acc_aro.get(),4)))
+    print(client_name+'-->'+'Arousal f1-score:{}'.format(round(fm_f1m_aro.get(),4)))
+    print('-------------------------------------------------------------------------------')
 
-    all_emo.append([p,v, fm_acc_val, fm_f1m_val, fm_acc_aro, fm_f1m_aro, y_act[0][0],y_pred_val ,y_act[0][1], y_pred_aro])
+    all_emo.append([p,v, fm_acc_val.get(), fm_f1m_val.get(), fm_acc_aro.get(), fm_f1m_aro.get(), y_act[0][0],y_pred_val ,y_act[0][1], y_pred_aro])
 
 
     #==========================================================
@@ -296,15 +295,25 @@ for jj in range(0,videos): #Video loop for each participants
     model_weights = fm_model.get_weights()
     encodedModelWeights = json.dumps(model_weights,cls=Numpy2JSONEncoder)
 
-    # print(encodedModelWeights)
+    client.publish("LocalModel", payload = encodedModelWeights)
+
+    print("Local Model Broadcasted for "+ p_v +" to Topic:-> LocalModel")
+
+    time.sleep(2)
+
+
+    #Send the model performance from each to server for checking Global Model's performance
+    if i >0:
+        model_performance = {'Local_Model':p,'Acc_val':fm_acc_val.get(),'F1_val':fm_f1m_val.get(), 'Acc_aro': fm_acc_aro.get(), 'F1_aro': fm_f1m_aro.get() }
+        encoded_model_performance = json.dumps(model_performance)
+        client.publish("ModelPerformance", payload = encoded_model_performance)
+        print("Local Model Performance Broadcasted for "+ p_v +" to Topic:-> ModelPerformance")
+
 
     #==========================================================
     # Broadcast (Publish) Local model weights to the mqttBroker
     #==========================================================
 
-    client.publish("LocalModel", payload = encodedModelWeights)
-
-    print("Local Model Broadcasted for "+ p_v +" to Topic:-> LocalModel")
     time.sleep(60) #put the loca server in sleep for 60 sec
 
     i +=1 #incrementing this will het the model sent by Global Server
