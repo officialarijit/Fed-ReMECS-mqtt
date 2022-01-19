@@ -42,6 +42,18 @@ def EagerTensor2Numpy(data):
     '''
     npWeightsMat = list()
     for i in range(len(data)):
-        npWeightsMat.append(data[i].numpy())
+        val = data[i].numpy()
+        npWeightsMat.append(val)
 
     return npWeightsMat
+
+
+def global_weights_mul_lr(data, learning_rate):
+    '''
+    This function multiplies the averaged weights with the learning rate after FedAvg of locall models weights
+    '''
+    tmp_global_weights = list()
+    for i in range(len(data)):
+        val = data[i]*learning_rate
+        tmp_global_weights.append(val)
+    return tmp_global_weights

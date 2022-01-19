@@ -13,8 +13,11 @@ qGSModel = queue.Queue()
 qGSPerfm = queue.Queue()
 
 
-global global_model_result
+global global_model_result, prev_global_model, current_global_model
 global_model_result =[]
+prev_global_model = list()
+
+l_rate = 0.05 #Learning rate
 
 
 def on_connect(client, userdata, flags, rc):
@@ -37,19 +40,23 @@ def on_message(client, userdata, message):
         print('Performance metric received  from Local Models')
         qGSPerfm.put(message)
 
-# mqttBroker = "mqtt.eclipseprojects.io"
+
 print('---------------------------------------------------------------')
-mqttBroker = "broker.hivemq.com"
+# mqttBroker = "mqtt.eclipseprojects.io"
+mqttBroker = "127.0.0.1"
 client = mqtt.Client(client_id ="GlobalServer", clean_session=True)
 client.on_connect = on_connect
-client.connect(mqttBroker, 1883)
+client.connect(mqttBroker,1883)
 
 topic_list =[('LocalModel',0),('ModelPerformance',0)]
 
 client.loop_start()
 client.on_message = on_message
 
+#**********************************************************
 time.sleep(5) #Wait for connection setup to complete
+#**********************************************************
+
 print('---------------------------------------------------------------')
 
 
@@ -61,7 +68,45 @@ while True:
     print('Global Server')
     print('Round: ',i)
 
-    time.sleep(50)
+    time.sleep(5)
+    #====================================================
+    # Global Model Performance Printing
+    #====================================================
+
+    if (i>0): #after first round of model exchange global models performance is calculated
+        print('Now Collecting Local Model erformacen Metrics....')
+        local_model_performace = list()
+        while not qGSPerfm.empty():
+            message = qGSPerfm.get()
+
+            if message is None:
+                continue
+
+            msg_model_performance = message.payload.decode('utf-8')
+
+            decodedModelPerfromance = list(json.loads(msg_model_performance).values())
+            local_model_performace.append(decodedModelPerfromance)
+
+        global_model_performance = np.array(local_model_performace)
+        global_performance = np.mean(global_model_performance, axis=0)
+
+        len_local_perfm = len(local_model_performace)
+        print('Total Model Performance received:',len_local_perfm)
+
+        if (len_local_perfm != 0):
+            global_model_result.append([i+1,i+1,global_performance[1],global_performance[2],global_performance[3],global_performance[4]])
+            print('----------------------------------------------------')
+            print('Global Model Valence Accuracy:',global_performance[1])
+            print('Global Model Valence F1-score:',global_performance[2])
+            print('Global Model Aroual Accuracy:',global_performance[3])
+            print('Global Model Arousal F1-score:',global_performance[4])
+            print('----------------------------------------------------')
+        else:
+            break #No more data from local model
+
+    #**********************************************************
+    time.sleep(50) #to receive model weights
+    #**********************************************************
 
     #=========================================================
     # Local Model Receiving Part
@@ -85,43 +130,6 @@ while True:
 
     print('Total Local Model Received:',len(all_local_model_weights))
 
-    time.sleep(5)
-
-    #====================================================
-    # Global Model Performance Printing
-    #====================================================
-
-    if (i>0): #after first round of model exchange global models performance is calculated
-        print('Now Collecting Local Model erformacen Metrics....')
-        local_model_performace = list()
-        while not qGSPerfm.empty():
-            message = qGSPerfm.get()
-
-            if message is None:
-                continue
-
-            msg_model_performance = message.payload.decode('utf-8')
-
-            decodedModelPerfromance = list(json.loads(msg_model_performance).values())
-            local_model_performace.append(decodedModelPerfromance)
-
-        len_local_perfm = len(local_model_performace)
-        print('Total Model Performance received:',len_local_perfm)
-
-        global_model_performance = np.array(local_model_performace)
-        global_performance = np.mean(global_model_performance, axis=0)
-
-        if (len_local_perfm != 0):
-            global_model_result.append([i+1,i+1,global_performance[1],global_performance[2],global_performance[3],global_performance[4]])
-            print('----------------------------------------------------')
-            print('Global Model Valence Accuracy:',global_performance[1])
-            print('Global Model Valence F1-score:',global_performance[2])
-            print('Global Model Aroual Accuracy:',global_performance[3])
-            print('Global Model Arousal F1-score:',global_performance[4])
-            print('----------------------------------------------------')
-        else:
-            break #No more data from local model
-
     #======================================================
 
     i +=1 #Next round increment
@@ -133,14 +141,28 @@ while True:
         #to get the average over all the local model, we simply take the sum of the scaled weights
         averaged_weights = list()
         averaged_weights = sum_scaled_weights(all_local_model_weights)
+
         global_weights = EagerTensor2Numpy(averaged_weights)
 
-        encodedGlobalModelWeights = json.dumps(global_weights,cls=Numpy2JSONEncoder)
+        if( i ==1):
+            prev_global_model = global_weights
+            encodedGlobalModelWeights = json.dumps(prev_global_model,cls=Numpy2JSONEncoder)
+        else:
+            global_weights = global_weights_mul_lr(global_weights, l_rate)
+            current_global_model = list()
+            for i in range(len(global_weights)):
+                current_global_model.append( prev_global_model[i] - global_weights[i])
+
+            prev_global_model = current_global_model
+            encodedGlobalModelWeights = json.dumps(current_global_model,cls=Numpy2JSONEncoder)
+
 
         client.publish("GlobalModel", payload = encodedGlobalModelWeights) #str(Global_weights), qos=0, retain=False)
         print("Broadcasted Global Model to Topic:--> GlobalModel")
 
-        time.sleep(20) #pause it so that the publisher gets the Global model
+        #**********************************************************
+        time.sleep(30) #pause it so that the publisher gets the Global model
+        #**********************************************************
 
         #====================================================================
 
@@ -148,7 +170,7 @@ while True:
     print('---------------HERE------------------')
     #===================================================================================
     # If No more data from Publisher exit and server closed connection to the broker
-    #====================================================================================
+    #===================================================================================
     if(i >0 and len(all_local_model_weights)==0): #loop break no message from producer
         break
 
