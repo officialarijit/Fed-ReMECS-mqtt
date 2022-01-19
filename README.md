@@ -14,6 +14,12 @@ A Federated Learning Method for Real-time Emotion State Classification from Mult
   - `Scikit-Learn` &#8592; for model's performance matrics. 
   - `paho-mqtt` &#8592; for `MQTT` protocol implementations. 
   - `Konsole - KDE's Terminal Emulator` &#8592; Terminal emulator.
+  -  MQTT broker 
+      -- sudo apt-add-repository ppa:mosquitto-dev/mosquitto-ppa
+      -- sudo apt-get update
+      -- sudo apt-get install mosquitto
+      -- sudo apt-get install mosquitto-clients
+      -- sudo apt clean
   
 - Installation steps:
   - Step 1: Install `Anaconda`. 
