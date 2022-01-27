@@ -32,3 +32,6 @@ Emotional and physical health are strongly connected and should be taken care of
   - Step 5: Run `bash trigger-clients.sh`
   - Step 6: Enter the number of `clients` you want. 
   - Step 7: Enjoy the visuals :wink:.
+
+
+# NOTE*: Please feel free to use the code by giving proper citation and star to this repository.
