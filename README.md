@@ -22,8 +22,7 @@
   
 - Installation steps:
   - Step 1: Install `Anaconda`. 
-  - Step 1: Create a `virtual environment` in Anaconnda.
-  - Step 2: Run `pip install -r requirements.txt`
+  - Step 2: Create a `virtual environment` in Anaconnda using the given `yml` environment file.
   - Step 3: Install `mosquitto broker`
       - `sudo apt-add-repository ppa:mosquitto-dev/mosquitto-ppa`
       - `sudo apt-get update`
