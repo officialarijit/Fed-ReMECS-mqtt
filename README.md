@@ -36,7 +36,7 @@
   - Step 6: Enter the number of `clients` you want. 
   - Step 7: Enjoy the visuals :wink:.
 
-# Publication: 
+# Cite this work: 
     @article{NANDI2022,
     title = {A federated learning method for real-time emotion state classification from multi-modal streaming},
     journal = {Methods},
