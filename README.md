@@ -53,6 +53,5 @@
 
 ## 📝 License
 
----
 Copyright © [Arijit](https://github.com/officialarijit).
 This project is MIT licensed.
