@@ -49,3 +49,10 @@
     url = {https://www.sciencedirect.com/science/article/pii/S104620232200072X},
     author = {Arijit Nandi and Fatos Xhafa}
     }
+
+
+## 📝 License
+
+---
+Copyright © [Arijit](https://github.com/officialarijit).
+This project is MIT licensed.
