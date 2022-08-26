@@ -12,4 +12,4 @@ RUN pip install  -r requirements.txt
 COPY . .
 
 # run the command
-ENTRYPOINT ["python", "pub-mc.py"]
+ENTRYPOINT ["python", "run-client.py"]
