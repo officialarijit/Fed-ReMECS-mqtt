@@ -63,7 +63,7 @@ client = mqtt.Client(client_id = global_server_id, clean_session=True)
 client.on_connect = on_connect
 client.connect(mqttBroker,mqtt_port)
 
-topic_list =[(local_model_topic,0),(local_model_topic,0)]
+topic_list =[(local_model_topic,0),(model_performance_topic,0)]
 
 client.loop_start()
 client.on_message = on_message
