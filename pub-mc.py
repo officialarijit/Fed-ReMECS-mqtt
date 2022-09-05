@@ -1,8 +1,6 @@
 #================================================================================================
 # Import important libraries
 #================================================================================================
-import os
-
 import paho.mqtt.client as mqtt
 import time, queue, sys, datetime, json, math, scipy, pywt, time
 import pandas as pd
@@ -15,8 +13,6 @@ from sklearn import preprocessing
 from collections import defaultdict, Counter
 from window_slider import Slider
 
-from dotenv import load_dotenv
-
 
 from feature_extraction_utils import *
 from data_reading_utils import *
@@ -26,8 +22,6 @@ from sklearn.metrics import accuracy_score
 from sklearn.metrics import f1_score
 # from multi_label_performance_metrics_utils import *
 
-
-load_dotenv('.env')
 
 
 #=================================================================================================
@@ -43,7 +37,6 @@ client_name = 'LocalServer (User)'+n
 print(client_name +':>>' +' ' +'Streaming Strated!')
 
 p = int(n) #Person number
-
 
 #=================================================================================================
 
@@ -68,25 +61,14 @@ def on_message(client, userdata, message): #On message callback from MQTT
     qLS.put(message)
 
 
-#=========================================================================
-#reading all this configs from the config files
-MQTTbrokerIP = os.environ.get("MQTT_SERVER_IP")
-mqtt_port = os.environ.get("MQTT_PORT")
-gm_topic = os.environ.get("MQTT_global_model_topic")
-folderPath = os.environ.get("Local_model_performance_file")
-segment_in_sec = os.environ.get('segment_in_sec')
-#=========================================================================
+# mqttBroker = "mqtt.eclipseprojects.io" #Used MQTT Broker
+mqttBroker = "127.0.0.1"
 
-mqttBroker = MQTTbrokerIP
 client = mqtt.Client(client_name) #mqtt Client
 client.on_connect = on_connect
-client.connect(mqttBroker, mqtt_port) #mqtt broker connect
+client.connect(mqttBroker, 1883) #mqtt broker connect
 
-
-
-
-
-topic_list =[(gm_topic,0)] #Subscription topic list
+topic_list =[('GlobalModel',0)] #Subscription topic list
 
 client.loop_start()
 
@@ -111,6 +93,8 @@ grand_resp = resp_data(p)
 #=================================================================================================
 # Sliding Window
 #=================================================================================================
+
+segment_in_sec = 10 #in sec
 bucket_size = int((8064/60)*segment_in_sec)  #8064 is for 60 sec record
 overlap_count = 0
 
@@ -357,6 +341,7 @@ for jj in range(0,videos): #Video loop for each participants
 #===============================================================================
 #Save all the results into CSV file
 #===============================================================================
+folderPath = '/home/gp/Desktop/MER_arin/FL-mqtt/Fed-ReMECS-mc-METHODS/Federated_Results/'
 fname_fm = folderPath + client_name +'_person_FusionModel'+'_'+'_results.csv'
 column_names = ['Person', 'Video', 'Acc','F1', 'y_act', 'y_pred']
 all_emo = pd.DataFrame(all_emo,columns = column_names)

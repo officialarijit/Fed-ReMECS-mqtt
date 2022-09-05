@@ -1,4 +1,3 @@
-import os
 import paho.mqtt.client as mqtt
 import paho.mqtt.subscribe as subscribe
 import time, queue, sys
@@ -9,10 +8,6 @@ from json import JSONEncoder
 from federated_utils import *
 from Numpy_to_JSON_utils import *
 
-
-from dotenv import load_dotenv
-load_dotenv('.env')
-
 global qGSModel, qGSPerfm
 qGSModel = queue.Queue()
 qGSPerfm = queue.Queue()
@@ -22,19 +17,8 @@ global global_model_result, prev_global_model, current_global_model
 global_model_result =[]
 prev_global_model = list()
 
+l_rate = 0.05 #Learning rate
 
-#=========================================================================
-# Reading these information from config file
-#=========================================================================
-l_rate = os.environ.get('LEARNING_RATE') #Learning rate
-local_model_topic = os.environ.get('MQTT_local_model_receive_topic')
-model_performance_topic = os.environ.get('MQTT_local_model_performance_topic')
-global_server_id = os.environ.get('Global_client_id')
-global_model_topic = os.environ.get('MQTT_global_model_topic')
-folderpath = os.environ.get('Global_model_performance_file')
-MQTTbrokerIP = os.environ.get("MQTT_SERVER_IP")
-mqtt_port = os.environ.get("MQTT_PORT")
-#=========================================================================
 
 def on_connect(client, userdata, flags, rc):
     if rc ==0:
@@ -48,22 +32,23 @@ def on_connect(client, userdata, flags, rc):
 
 
 def on_message(client, userdata, message):
-    if (message.topic == local_model_topic):
+    if (message.topic == "LocalModel"):
         print("Message received from Local Model")
         qGSModel.put(message)
 
-    if(message.topic == model_performance_topic):
+    if(message.topic == 'ModelPerformance'):
         print('Performance metric received  from Local Models')
         qGSPerfm.put(message)
 
 
 print('---------------------------------------------------------------')
-mqttBroker = MQTTbrokerIP
-client = mqtt.Client(client_id = global_server_id, clean_session=True)
+# mqttBroker = "mqtt.eclipseprojects.io"
+mqttBroker = "127.0.0.1"
+client = mqtt.Client(client_id ="GlobalServer", clean_session=True)
 client.on_connect = on_connect
-client.connect(mqttBroker,mqtt_port)
+client.connect(mqttBroker,1883)
 
-topic_list =[(local_model_topic,0),(model_performance_topic,0)]
+topic_list =[('LocalModel',0),('ModelPerformance',0)]
 
 client.loop_start()
 client.on_message = on_message
@@ -156,22 +141,23 @@ while True:
         averaged_weights = sum_scaled_weights(all_local_model_weights)
 
         global_weights = EagerTensor2Numpy(averaged_weights)
+        encodedGlobalModelWeights = json.dumps(global_weights,cls=Numpy2JSONEncoder)
 
-        if( i ==1):
-            prev_global_model = global_weights
-            encodedGlobalModelWeights = json.dumps(prev_global_model,cls=Numpy2JSONEncoder)
-        else:
-            global_weights = global_weights_mul_lr(global_weights, l_rate)
-            current_global_model = list()
-            for i in range(len(global_weights)):
-                current_global_model.append( prev_global_model[i] - global_weights[i])
+        # if( i ==1):
+        #     prev_global_model = global_weights
+        #     encodedGlobalModelWeights = json.dumps(prev_global_model,cls=Numpy2JSONEncoder)
+        # else:
+        #     global_weights = global_weights_mul_lr(global_weights, l_rate)
+        #     current_global_model = list()
+        #     for i in range(len(global_weights)):
+        #         current_global_model.append( prev_global_model[i] - global_weights[i])
+        #
+        #     prev_global_model = current_global_model
+        #     encodedGlobalModelWeights = json.dumps(current_global_model,cls=Numpy2JSONEncoder)
 
-            prev_global_model = current_global_model
-            encodedGlobalModelWeights = json.dumps(current_global_model,cls=Numpy2JSONEncoder)
 
-
-        client.publish(global_model_topic, payload = encodedGlobalModelWeights) #str(Global_weights), qos=0, retain=False)
-        print("Broadcasted Global Model to Topic:-->",global_model_topic)
+        client.publish("GlobalModel", payload = encodedGlobalModelWeights) #str(Global_weights), qos=0, retain=False)
+        print("Broadcasted Global Model to Topic:--> GlobalModel")
 
         #**********************************************************
         time.sleep(30) #pause it so that the publisher gets the Global model
@@ -191,7 +177,7 @@ while True:
 
 
 #Global Model Result Save
-folderPath = folderpath
+folderPath = '/home/gp/Desktop/MER_arin/FL-mqtt/Fed-ReMECS-mc-METHODS/Federated_Results/'
 fname_fm = folderPath +'_Global_Model' +'_'+'_results.csv'
 column_names = ['Acc', 'F1']
 global_model_result = pd.DataFrame(global_model_result,columns = column_names)
