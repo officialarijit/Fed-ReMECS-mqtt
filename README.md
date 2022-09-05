@@ -32,7 +32,7 @@
       - `sudo apt-get install mosquitto-clients`
       - `sudo apt clean`
   - Step 4: Open `terminal`, and `activate environment`.
-  - Step 5: Run `bash trigger-clients.sh`
+  - Step 5: Run `bash fl-run-mc.sh`
   - Step 6: Enter the number of `clients` you want. 
   - Step 7: Enjoy the visuals :wink:.
 
