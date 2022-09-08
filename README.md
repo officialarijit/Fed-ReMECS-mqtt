@@ -40,14 +40,17 @@
 ## NOTE*: Please feel free to use the code by giving proper citation and star to this repository.
 
 # Cite this work: 
-    @article{NANDI2022,
-    title = {A federated learning method for real-time emotion state classification from multi-modal streaming},
-    journal = {Methods},
-    year = {2022},
-    issn = {1046-2023},
-    doi = {https://doi.org/10.1016/j.ymeth.2022.03.005},
-    url = {https://www.sciencedirect.com/science/article/pii/S104620232200072X},
-    author = {Arijit Nandi and Fatos Xhafa}
+    @article{NANDI2022340,
+      title = {A federated learning method for real-time emotion state classification from multi-modal streaming},
+      journal = {Methods},
+      volume = {204},
+      pages = {340-347},
+      year = {2022},
+      issn = {1046-2023},
+      doi = {https://doi.org/10.1016/j.ymeth.2022.03.005},
+      url = {https://www.sciencedirect.com/science/article/pii/S104620232200072X},
+      author = {Arijit Nandi and Fatos Xhafa},
+      keywords = {Real-time emotion classification, Federated learning, Feed-forward neural network, Multi-modal data streaming, Wearable sensors, Data-driven systems}
     }
 
 
