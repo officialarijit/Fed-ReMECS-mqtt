@@ -94,7 +94,7 @@ grand_resp = resp_data(p)
 # Sliding Window
 #=================================================================================================
 
-segment_in_sec = 10 #in sec
+segment_in_sec = 20 #in sec
 bucket_size = int((8064/60)*segment_in_sec)  #8064 is for 60 sec record
 overlap_count = 0
 
@@ -341,7 +341,7 @@ for jj in range(0,videos): #Video loop for each participants
 #===============================================================================
 #Save all the results into CSV file
 #===============================================================================
-folderPath = '/home/gp/Desktop/MER_arin/FL-mqtt/Fed-ReMECS-mc-METHODS/Federated_Results/'
+folderPath = '/home/gp/Desktop/PhD-codes/Fed-ReMECS-mqtt/Federated_Results/'
 fname_fm = folderPath + client_name +'_person_FusionModel'+'_'+'_results.csv'
 column_names = ['Person', 'Video', 'Acc','F1', 'y_act', 'y_pred']
 all_emo = pd.DataFrame(all_emo,columns = column_names)

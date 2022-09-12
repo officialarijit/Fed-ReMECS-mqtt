@@ -143,18 +143,6 @@ while True:
         global_weights = EagerTensor2Numpy(averaged_weights)
         encodedGlobalModelWeights = json.dumps(global_weights,cls=Numpy2JSONEncoder)
 
-        # if( i ==1):
-        #     prev_global_model = global_weights
-        #     encodedGlobalModelWeights = json.dumps(prev_global_model,cls=Numpy2JSONEncoder)
-        # else:
-        #     global_weights = global_weights_mul_lr(global_weights, l_rate)
-        #     current_global_model = list()
-        #     for i in range(len(global_weights)):
-        #         current_global_model.append( prev_global_model[i] - global_weights[i])
-        #
-        #     prev_global_model = current_global_model
-        #     encodedGlobalModelWeights = json.dumps(current_global_model,cls=Numpy2JSONEncoder)
-
 
         client.publish("GlobalModel", payload = encodedGlobalModelWeights) #str(Global_weights), qos=0, retain=False)
         print("Broadcasted Global Model to Topic:--> GlobalModel")
@@ -177,7 +165,7 @@ while True:
 
 
 #Global Model Result Save
-folderPath = '/home/gp/Desktop/MER_arin/FL-mqtt/Fed-ReMECS-mc-METHODS/Federated_Results/'
+folderPath = '/home/gp/Desktop/PhD-codes/Fed-ReMECS-mqtt/Federated_Results/'
 fname_fm = folderPath +'_Global_Model' +'_'+'_results.csv'
 column_names = ['Acc', 'F1']
 global_model_result = pd.DataFrame(global_model_result,columns = column_names)
