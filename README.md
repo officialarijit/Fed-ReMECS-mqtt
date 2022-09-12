@@ -7,17 +7,21 @@
 **DATASET** : `DEAP dataset` is required. The experiment is conducted using the `Electrodermal activity(EDA) + Respitory Belt (RB) measurements taken from DEAP dataset`. To download `DEAP dataset` click on : https://www.eecs.qmul.ac.uk/mmv/datasets/deap/download.html
 
 
+
+## Installation: 
+
+
 **DATA Rearrangement required**
 ```diff
 - CAUTION
 
 + The DEAP data needs a simple rearrangement to work with the code. 
-@@  The `data_rearrangement.py` rearranges the data from the .dat or .mat file from the DEAP dataset. Then follow the follwoing steps.
+
+@@  The `data_rearrangement.py` rearranges the data from the .dat or .mat file from the DEAP dataset. @@
+@@ Then follow the follwoing steps. @@
 
 ```
 
-
-## Installation: 
 - Programming language
   - `Python 3.6`
 
