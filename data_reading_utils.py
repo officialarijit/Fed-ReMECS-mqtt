@@ -17,7 +17,7 @@ import numpy as np
 # EDA data read from files
 ##===================================================
 def eda_data(p):
-    file_eda = '/home/gp/Desktop/PhD-codes/eda_data/'+str(p)+'_GSR_data_from_DEAP.csv'
+    file_eda = '/home/gp/Desktop/PhD-codes/DEAP_data/eda_data/'+str(p)+'_GSR_data_from_DEAP.csv'
     print(file_eda)
     eda_sig = pd.read_csv(file_eda,sep=',', header = None, engine='python')
     return eda_sig
@@ -26,7 +26,7 @@ def eda_data(p):
 # Resp data read from files
 ##===================================================
 def resp_data(p):
-    file_resp = '/home/gp/Desktop/PhD-codes/resp_data/'+str(p)+'_Respiration_data_from_DEAP.csv'
+    file_resp = '/home/gp/Desktop/PhD-codes/DEAP_data/resp_data/'+str(p)+'_Respiration_data_from_DEAP.csv'
     print(file_resp)
     resp_sig = pd.read_csv(file_resp,sep=',', header = None, engine='python')
     return resp_sig
