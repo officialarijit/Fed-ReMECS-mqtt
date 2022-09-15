@@ -11,7 +11,7 @@ from statistics import mode
 from scipy import stats
 from sklearn import preprocessing
 from collections import defaultdict, Counter
-from window_slider import Slider
+from window_slider import *
 
 
 from feature_extraction_utils import *
