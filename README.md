@@ -17,7 +17,7 @@
 
 + The DEAP data needs a simple rearrangement to work with the code. 
 
-@@  The `data_rearrangement.py` rearranges the data from the .dat or .mat file from the DEAP dataset. @@
+@@  Check the `data_rearrangements` folder for the  DEAP  data rearrangement from the .dat or .mat file from the DEAP dataset. @@
 @@ Then follow the follwoing steps. @@
 
 ```
